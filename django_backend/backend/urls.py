@@ -18,5 +18,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('testApi/', views.testApi),
+    path('testApi/', views.testApi, name='testApi'),
+    path('login/', views.LoginAndRegister.as_view(), name='loginAndRegister')
 ]

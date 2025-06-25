@@ -4,7 +4,6 @@ import 'package:getwidget/getwidget.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer';
-import '../routes.dart';
 import '../config.dart';
 
 class UserRegisterPage extends StatefulWidget {
@@ -15,21 +14,31 @@ class UserRegisterPage extends StatefulWidget {
 
 class GoogleSignInService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
+    scopes: ['email', 'profile', 'openid'],
+    serverClientId: OuterToken.googleClientID,
   );
 
   static Future<void> loginWithGoogle() async {
     try {
+      log('take signIn');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      log('take signIn fin');
       if (googleUser == null) {
+        log('no user');
         return;
       }
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      log('get auth');
+      final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
+      log('get auth fin');
 
       if (idToken != null) {
+        log('token:$idToken');
+        log('send token to backend');
         await _sendTokenToBackend(idToken);
+        log('send token to backend fin');
+      } else {
+        log('token is null');
       }
     } catch (error) {
       log('Google登入錯誤: $error');
@@ -37,13 +46,13 @@ class GoogleSignInService {
   }
 
   static Future<void> _sendTokenToBackend(String idToken) async {
-    final url = Uri.parse('$baseUrl${ApiPath.testApi}');
+    final url = Uri.parse('$baseUrl${ApiPath.loginAndRegister}');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'id_token': idToken}),
+      body: json.encode({'idToken': idToken}),
     );
-
+    log('$response');
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['access']; // 通常會有 access token
